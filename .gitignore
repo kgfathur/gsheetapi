@@ -1,3 +1,4 @@
 */conf.d/*.conf
 */certs/*.pem
 __pycache__/
+.vscode/*
