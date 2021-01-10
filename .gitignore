@@ -1,2 +1,3 @@
 */conf.d/*.conf
 */certs/*.pem
+__pycache__/
