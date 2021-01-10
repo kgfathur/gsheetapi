@@ -12,7 +12,7 @@ class ProxmoxAPI:
         self.session = requests.Session()
 
         if workdir is None:
-            self.workdir = os.getcwd()
+            self.workdir = os.getcwd() + '/gsheetapi'
         else:
             self.workdir = workdir
         
@@ -57,8 +57,11 @@ class ProxmoxAPI:
         
         config.read(self.configFile)
 
-        user_config = []
-        default_config = []
+        run_config = ConfigParser()
+        run_config['default'] = {}
+        run_config['running'] = {}
+        default_config = run_config['default']
+        running_config = run_config['running']
 
         for section in config.keys():
             if debug:
@@ -68,29 +71,27 @@ class ProxmoxAPI:
             for config_item in config_default.keys():
                 if section == 'DEFAULT':
                     if config_item in config[section]:
-                        default_config.append((config_item, config[section][config_item]))
+                        default_config[config_item] = config[section][config_item]
                         if debug:
                             print('  - {} = {}'.format(config_item, config[section][config_item]))
                     else:
                         if debug:
                             print("No DEFAULT Config for '{}'".format(config_item))
                             print("Set DEAFULT {} = {}".format(config_item, config_default[config_item]))
-                        default_config.append((config_item, config_default[config_item]))
+                        default_config[config_item] = config_default[config_item]
                 else:
-                    if len(user_config) == 0:
+                    if len(running_config) == 0:
                         config_default = dict(default_config)
                     if config_item in config[section]:
-                        user_config.append((config_item, config[section][config_item]))
+                        running_config[config_item] = config[section][config_item]
                         if debug:
                             print('  - {} = {}'.format(config_item, config[section][config_item]))
                     else:
                         if debug:
                             print("No pve_config for '{}'".format(config_item))
                             print("Set {} = {} [DEFAULT]".format(config_item, config_default[config_item]))
-                        user_config.append((config_item, config_default[config_item]))
+                        running_config[config_item] = config_default[config_item]
         
-        running_config = dict(user_config)
-
         if verify_ssl is None:
             self.verify_ssl = running_config['verify_ssl']
         else:
@@ -103,7 +104,15 @@ class ProxmoxAPI:
                     print('Using certificate path from config file, cerificate: {}'.format(self.cacert))
             else:
                 self.cacert = cacert
-                
+
+            if self.cacert.startswith('~/'):
+                try:
+                    self.cacert = os.getenv('HOME') + self.cacert
+                except Exception as ei:
+                    print('Exception > {}'.format(ei))
+            else:
+                self.cacert = "{}/{}".format(self.workdir, self.cacert)
+            
             if not os.path.isfile(self.cacert):
                 print('VERIFY_SSL = True, but certificate ({}) not exist! Proccess aborted'.format(self.cacert))
                 os.sys.exit(1)

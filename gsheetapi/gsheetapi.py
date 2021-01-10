@@ -9,7 +9,9 @@ import time
 from configparser import ConfigParser
 from distutils.util import strtobool
 
-from pveapi.connection import ProxmoxAPI
+from pveapi import ProxmoxAPI
+
+workdir = os.getcwd() + '/gsheetapi'
 
 pve = ProxmoxAPI(configFile = 'conf.d/01-private.conf')
 pve.login()
