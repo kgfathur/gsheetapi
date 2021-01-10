@@ -25,11 +25,11 @@ print('Code:', response['status_code'])
 
 if ( response['status_code'] == 200):
     data = response['data']
-    print(json.dumps(data, indent=2))
+    # print(json.dumps(data, indent=2))
     data.sort(key=get_vmid)
 
     for dati in data:
-        print('{:>6} {:<36} {:<10} {:>8} {}'.format(dati['vmid'], dati['name'], dati['status'], dati['uptime'], dati['disk']))
+        print('{:>6} {:<36} {:<10} {:>8.2f} {:>8.2f} {:>10.2f}'.format(dati['vmid'], dati['name'], dati['status'], dati['maxdisk']/(1024*1024*1024), dati['maxmem']/(1024*1024*1024), dati['uptime']/3600))
                 
 elif (response['status_code'] == 401):
     data = response['data']
