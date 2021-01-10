@@ -1,24 +1,4 @@
-#!/usr/bin/python3
-
-import os
-import sys
-import requests
-import urllib3
-import json
-import time
-from configparser import ConfigParser
-from distutils.util import strtobool
-
-from pveapi import ProxmoxAPI
-
-def get_vmid(e):
-    return e.get('vmid')
-
-workdir = os.getcwd() + '/gsheetapi'
-
-pve = ProxmoxAPI(configFile = 'conf.d/01-private.conf')
-pve.login()
-endpoint = '/api2/json/nodes/{}/qemu'.format(pve.node)
+endpoint = '/api2/json/nodes/{}/qemu/{}/config'.format(pve.node, '405')
 response = pve.get(endpoint = endpoint)
 
 print('Code:', response['status_code'])
@@ -26,8 +6,7 @@ print('Code:', response['status_code'])
 if ( response['status_code'] == 200):
     data = response['data']
     print(json.dumps(data, indent=2))
-    data.sort(key=get_vmid)
-
+    
     for dati in data:
         print('{:>6} {:<36} {:<10} {:>8} {}'.format(dati['vmid'], dati['name'], dati['status'], dati['uptime'], dati['disk']))
                 

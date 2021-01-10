@@ -5,7 +5,7 @@ import json
 from configparser import ConfigParser
 
 class ProxmoxAPI:
-    def __init__(self, configFile = None, host = None, port = None, realm = None, username = None, password = None, verify_ssl = None, cacert = None, endpoint = None, workdir = None, debug = False):
+    def __init__(self, configFile = None, host = None, port = None, node = None, realm = None, username = None, password = None, verify_ssl = None, cacert = None, endpoint = None, workdir = None, debug = False):
         
         load_default_section = True
         config = ConfigParser()
@@ -120,6 +120,11 @@ class ProxmoxAPI:
             self.cacert = False
 
 
+        if node is None:
+            self.node = running_config['pve_node']
+        else:
+            self.node = node
+
         if host is None:
             self.host = running_config['pve_host']
         else:
@@ -184,13 +189,13 @@ class ProxmoxAPI:
             elif (responCode == 401):
                 print('Authentication Failure for user [{}]'.format(self.username))
 
-    def get(self, endpoint = None, params = None, debug = False):
+    def get(self, endpoint = None, params = None, headers = None, debug = False):
         
         url = '{}:{}{}'.format(self.host, self.port, endpoint)
         if debug:
             print('GET: {} with user [{}]'.format(url, self.username))
         try:
-            response = self.session.get(url, cookies = self.cookies, params = params, verify=self.cacert)
+            response = self.session.get(url, cookies = self.cookies, headers = headers, params = params, verify=self.cacert)
             self.data = json.loads(response.content)["data"]
             self.status_code = response.status_code
             self.reason = response.reason
