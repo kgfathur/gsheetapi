@@ -10,7 +10,7 @@ from configparser import ConfigParser
 from distutils.util import strtobool
 
 from pveapi import ProxmoxAPI
-from easyconfig import EasyConfig
+from ezconfig import EZConfig
 
 def get_vmid(e):
     return e.get('vmid')

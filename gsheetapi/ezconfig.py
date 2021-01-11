@@ -3,7 +3,7 @@ import glob
 import json
 from configparser import ConfigParser
 
-class EasyConfig:
+class EZConfig:
     def __init__(self, config_file = None, default_config = None, confdir = 'conf.d', workdir = None, debug = False):
 
         print('localtion: {}'.format(os.path.dirname(os.path.abspath(__file__))))
@@ -119,7 +119,7 @@ def main():
     range_name = Sheet1!A2:A3
     """)
 
-    ec = EasyConfig(default_config = default_config, debug = True)
+    ec = EZConfig(default_config = default_config, debug = True)
     print(ec.config['PVE_CONFIG']['pve_node'])
 
 if __name__ == "__main__":
