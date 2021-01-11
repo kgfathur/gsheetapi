@@ -5,20 +5,17 @@ from configparser import ConfigParser
 
 class EasyConfig:
     def __init__(self, config_file = None, default_config = None, confdir = 'conf.d', workdir = None, debug = False):
-        
-        load_default_config = True
-        config = ConfigParser()
-        
-        run_config = ConfigParser()
-        run_config['default'] = {}
-        run_config['running'] = {}
-        default_config_items = run_config['default']
-        running_config_items = run_config['running']
 
+        print('localtion: {}'.format(os.path.dirname(os.path.abspath(__file__))))
+        
+        load_default_section = False
+        loaded_config = ConfigParser()
+        
+        self.config = ConfigParser()
         self.confdir = confdir
 
         if workdir is None:
-            self.workdir = os.getcwd() + '/gsheetapi'
+            self.workdir = os.path.dirname(os.path.abspath(__file__))
         else:
             self.workdir = workdir
 
@@ -39,10 +36,8 @@ class EasyConfig:
                 print ("Default config ({}) not exist! creating...".format(default_config_file))
                 try:
                     with open(default_config_file, 'w') as create_config_file:
-                        config['DEFAULT'] = default_config
-                        config['DEFAULT']['pve_cacert'] = './certs/pve-root-ca.pem'
-                        config['pve_config'] = default_config
-                        config.write(create_config_file)
+                        loaded_config = default_config
+                        loaded_config.write(create_config_file)
 
                 except Exception as ei:
                     print('Exception > {}'.format(ei))
@@ -61,39 +56,71 @@ class EasyConfig:
                 print ("Configuration file ({}) not exist! Proccess aborted!".format(self.config_file))
                 os.sys.exit(1)
         
-        config.read(self.config_file)
+        loaded_config.read(self.config_file)
+        self.config = loaded_config
 
-        for section in config.keys():
+        for config_section in self.default_config.keys():
+            
             if debug:
-                print(config[section])
-            if not load_default_config:
-                break
-            for config_item in default_config.keys():
-                if section == 'DEFAULT':
-                    if config_item in config[section]:
-                        default_config_items[config_item] = config[section][config_item]
-                        if debug:
-                            print('  - {} = {}'.format(config_item, config[section][config_item]))
-                    else:
-                        if debug:
-                            print("No DEFAULT Config for '{}'".format(config_item))
-                            print("Set DEAFULT {} = {}".format(config_item, default_config_items[config_item]))
-                        default_config[config_item] = default_config_items[config_item]
+                print(config_section)
+            if not load_default_section:
+                if config_section == 'DEFAULT':
+                    if debug:
+                        print('LOAD_DEFAULT_SECTION = False')
+                    continue
+            for config_item in self.default_config[config_section]:
+                if config_item in loaded_config[config_section]:
+                    self.config[config_section][config_item] = loaded_config[config_section][config_item]
+                    # if debug:
+                    #     print('  - {} = {}'.format(config_item, loaded_config[config_section][config_item]))
                 else:
-                    if len(running_config_items) == 0:
-                        running_config_items = running_config_items
-                    if config_item in config[section]:
-                        running_config_items[config_item] = config[section][config_item]
-                        if debug:
-                            print('  - {} = {}'.format(config_item, config[section][config_item]))
-                    else:
-                        if debug:
-                            print("No pve_config for '{}'".format(config_item))
-                            print("Set {} = {} [DEFAULT]".format(config_item, default_config_items[config_item]))
-                        running_config_items[config_item] = default_config_items[config_item]
+                    self.config[config_section][config_item] = default_config[config_section][config_item]
+                    if debug:
+                        print("No loaded_config item for '{}'".format(config_item))
+                        print("Set default {} = {}".format(config_item, default_config[config_section][config_item]))
+                
+                if debug:
+                    print('  - {} = {}'.format(config_item, self.config[config_section][config_item]))
+    
+    def get(self, section = None, item = None, debug = False):
+        value = None
+        if section in self.config.sections():
+            if item in self.config[section]:
+                value = self.config[section][item]
+            else:
+                value = None
+        else:
+            value = None
         
-        self.user = None
-        self.ticket = None
-        self.token = None
-        self.cookies = None
-        # self.session = requests.Session()
+        return value
+    
+def main():
+    
+    workdir = os.path.dirname(os.path.abspath(__file__))
+    print('main workdir: {}'.format(workdir))
+
+    default_config = ConfigParser()
+    default_config.read_string("""
+    [PVE_CONFIG]
+    pve_node = pve
+    pve_host = https://localhost
+    pve_port = 8006
+    pve_user = root
+    pve_pass = admin
+    pve_realm = pam
+    pve_cacert = certs/pve-root-ca.pem
+    pve_endpoint = /api2/json/access/ticket
+    verify_ssl = True
+
+    [GOOGLE_SHEET]
+    scope = https://www.googleapis.com/auth/spreadsheets.readonly
+    spreadsheet_id = 0123456789AbCdEfGhIjKlMnOpQrStUvWxyz
+    sheet_id = 1234567890
+    range_name = Sheet1!A2:A3
+    """)
+
+    ec = EasyConfig(default_config = default_config, debug = True)
+    print(ec.config['PVE_CONFIG']['pve_node'])
+
+if __name__ == "__main__":
+    main()
